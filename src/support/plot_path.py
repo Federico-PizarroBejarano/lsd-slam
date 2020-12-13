@@ -1,17 +1,14 @@
-import rasterio
-import rasterio.plot
 import numpy as np
 import matplotlib.pyplot as plt
-
+from imageio import imread
 
 def plot_path(overhead_file, gps_file):
-    overhead = rasterio.open(overhead_file)
+    overhead = imread(overhead_file)
     gps = np.genfromtxt(gps_file, delimiter=",")
 
-    mosaic_rgb = np.dstack(tuple(overhead.read(i) for i in [1,2,3]))
-    extent = rasterio.plot.plotting_extent(overhead)
+    extent = (625436.02725488, 625563.22725488, 5041709.408990768, 5041778.008990767)
 
-    plt.imshow(mosaic_rgb, extent=extent)
+    plt.imshow(overhead, extent=extent)
     plt.scatter(gps[:,1], gps[:,2], s=1, color='b')
 
     plt.show()
