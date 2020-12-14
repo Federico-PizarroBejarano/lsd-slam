@@ -1,24 +1,26 @@
 import numpy as np
 from scipy.ndimage.filters import correlate, median_filter
+from imageio import imread
+import matplotlib.pyplot as plt
+import cv2
 
-def get_disparity(Il, Ir, bbox, maxd):
+from rectify_images import rectify_images
+
+def get_disparity(It, Ib, maxd):
     """
-    This function computes a stereo disparity image from left stereo 
-    image Il and right stereo image Ir. Only disparity values within
-    the bounding box region (inclusive) are evaluated.
+    This function computes a stereo disparity image from top stereo 
+    image It and bottom stereo image Ib. 
 
     Parameters:
     -----------
-    Il    - Left stereo image, m x n pixel np.array, greyscale.
-    Ir    - Right stereo image, m x n pixel np.array, greyscale.
-    bbox  - 2x2 np.array, bounding box, relative to left image, from top left
-            corner to bottom right corner (inclusive). (x, y) in columns.
+    It    - Top stereo image, m x n pixel np.array, greyscale.
+    Ib    - Bottom stereo image, m x n pixel np.array, greyscale.
     maxd  - Integer, maximum disparity value; disparities must be within zero
             to maxd inclusive (i.e., don't search beyond maxd).
 
     Returns:
     --------
-    Id  - Disparity image (map) as np.array, same size as Il.
+    Id  - Disparity image (map) as np.array, same size as It.
     """
     
     """ Algorithm used: Census Transform
@@ -54,19 +56,29 @@ def get_disparity(Il, Ir, bbox, maxd):
     two images. Most importantly, it is very fast. 
     """
  
+    Il = np.transpose(It)
+    Ir = np.transpose(Ib)
+
     Id = np.zeros(Il.shape)
     
     # Set all parameters
         # window: window size for SAD
         # transform_size: window size for census transform 
         # median_window_size: size of median filter used at the end
-    window = 16
-    transform_size = 2
-    median_window_size = 12
+    window = 20
+    transform_size = 3
+    median_window_size = 15
    
     height = Il.shape[0]
     width = Il.shape[1]
-    
+
+    # Getting useful pixels
+    grad = np.gradient(Il)[1]
+    min_gradient = 5
+
+    kernel = np.ones((3,3),np.uint8)
+    useful_pixels = cv2.dilate(np.uint8(np.abs(grad)>min_gradient), kernel, 1)
+
     # Census transform both left and right images
     Il_rt = census_transform(Il, transform_size).astype(int)
     Ir_rt = census_transform(Ir, transform_size).astype(int)
@@ -85,14 +97,14 @@ def get_disparity(Il, Ir, bbox, maxd):
     # Aggregate pixel errors in a patch using correlate filter
     for i in range(len(all_pixel_errors)):
         all_patch_errors.append(correlate(all_pixel_errors[i], mask))
-        
+    
     # Loop through every pixel in image
     for y in range(height):
         for x in range(width):
-            # Confirm pixel is within bounding box
-            if x > bbox[0, 1] or x < bbox[0, 0] or y > bbox[1, 1] or y < bbox[1, 0]:
+            # Check if gradient is sufficiently large
+            if useful_pixels[y][x] == 0:
                 continue
-            
+
             # Initialize minimum error and best disparity
             min_err = float('inf')
             best_disparity = x
@@ -118,12 +130,14 @@ def get_disparity(Il, Ir, bbox, maxd):
     # Use the median filter to smooth out disparity values
     Id = median_filter(Id, size = median_window_size)
 
+    print("Percent of image used: ", useful_pixels.sum()/(Id.shape[0] * Id.shape[1]))
+
     correct = isinstance(Id, np.ndarray) and Id.shape == Il.shape
 
     if not correct:
         raise TypeError("Wrong type or size returned!")
 
-    return Id
+    return np.transpose(Id)
 
 
 def census_transform(I, transform_size):
@@ -185,3 +199,44 @@ def hamming_distance(xor_num):
     bitstring = bin(xor_num)
     hamming_dist = bitstring.count('1')
     return hamming_dist
+
+
+if __name__ == "__main__":
+    # Load the stereo images
+    It = imread('./input/run1_base_hr/omni_image4/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
+    Ib = imread('./input/run1_base_hr/omni_image5/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
+    
+    # It = imread('./input/run1_base_hr/omni_image4/frame001577_2018_09_04_17_25_40_946193.png', as_gray = True)
+    # Ib = imread('./input/run1_base_hr/omni_image5/frame001577_2018_09_04_17_25_40_946193.png', as_gray = True)
+
+    Kt = np.array([[473.571, 0,  378.17],
+          [0,  477.53, 212.577],
+          [0,  0,  1]])
+    Kb = np.array([[473.368, 0,  371.65],
+          [0,  477.558, 204.79],
+          [0,  0,  1]])
+    dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
+    db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
+    
+    imageSize = (752, 480)
+    T = np.array([0, 0.12, 0])
+
+    It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)
+
+    It_rect = cv2.bilateralFilter(It_rect,5,50,50)
+    Ib_rect = cv2.bilateralFilter(Ib_rect,5,50,50)
+
+    maxd = 70
+
+    Id = get_disparity(It_rect, Ib_rect, maxd)
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(221)
+    ax2 = fig.add_subplot(222)
+    ax3 = fig.add_subplot(223)
+    ax1.imshow(It_rect, cmap='gray')
+    ax2.imshow(Ib_rect, cmap='gray')
+    ax3.imshow(-Id, cmap='gray')
+    plt.show()
+
+    print(np.max(Id), np.min(Id), 100*(Id>0).sum()/(Id.shape[0] * Id.shape[1]))
