@@ -3,12 +3,14 @@ import matplotlib.pyplot as plt
 from imageio import imread
 import os
 from scipy.spatial.transform import Rotation as R
+from numpy.linalg import inv
 
 from .support.get_disparity import get_disparity
 from .support.rectify_images import rectify_images
 from .support.estimate_movement import estimate_movement
 from .support.plot_path import plot_path
 from .support.get_utm_poses import get_utm_poses
+
 
 def run_project(start_frame, end_frame):
     Kt = np.array([[473.571, 0,  378.17],
@@ -26,18 +28,18 @@ def run_project(start_frame, end_frame):
     maxd = 70
 
     num_images = int(end_frame) - int(start_frame)
-    all_movements = np.zeros((num_images, 6))
+    all_movements = np.zeros((num_images+1, 6))
 
     ground_truth = np.genfromtxt("./input/run1_base_hr/global-pose-utm.txt", delimiter=',')
-    ground_truth_utm = ground_truth[:, 1:3]
+    ground_truth_utm = ground_truth[start_frame:end_frame+1, 1:3]
 
-    initial_pose = ground_truth[0, 1:]
+    initial_pose = ground_truth[start_frame, 1:]
     initial_movement = np.zeros((1, 6))
 
     initial_movement[0, 0:3] = initial_pose[0:3]
     initial_movement[0, 3:] = R.from_quat(initial_pose[3:]).as_euler('xyz')
 
-    for i in range(start_frame, end_frame):
+    for i in range(start_frame, end_frame+1):
         frame_str = str(i).zfill(6 - len(str(i)))
 
         It_start = It_end
@@ -50,11 +52,11 @@ def run_project(start_frame, end_frame):
         disparity_end =  get_disparity(It_end, Ib_end, maxd) #np.load('disparity.npy') 
 
         if i == int(start_frame):
-            movement = initial_movement
+            movement = initial_movement.T
         else:
             movement = estimate_movement(It_start, It_end, disparity_start, Kt, baseline)
         
-        all_movements[i] = movement
+        all_movements[i] = movement.T
 
     all_utm_poses = get_utm_poses(all_movements)
 
@@ -63,4 +65,4 @@ def run_project(start_frame, end_frame):
 
 
 if __name__ == "__main__":
-    run_project("000000_2018_09_04_17_19_42_773316", "000000_2018_09_04_17_19_42_773316") #"001577_2018_09_04_17_25_40_946193")
+    run_project(0, 1000)

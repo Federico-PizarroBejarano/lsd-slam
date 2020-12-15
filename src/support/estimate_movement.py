@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.linalg import inv
 
-from rpy_from_dcm import rpy_from_dcm
-from dcm_from_rpy import dcm_from_rpy
+from .rpy_from_dcm import rpy_from_dcm
+from .dcm_from_rpy import dcm_from_rpy
 
 def epose_from_hpose(T):
     """Covert 4x4 homogeneous pose matrix to x, y, z, roll, pitch, yaw."""

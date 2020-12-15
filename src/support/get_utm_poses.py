@@ -12,7 +12,7 @@ def get_utm_poses(all_movements):
     for i in range(1, all_movements.shape[0]):
         T = hpose_from_epose(all_movements[i, :])
         current_transform = current_transform @ T
-        utm_poses[i+1] = current_transform[0:2, 3].T
+        utm_poses[i] = current_transform[0:2, 3].T
     
     return utm_poses
 
