@@ -13,6 +13,9 @@ def rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T):
     It_rect = cv2.remap(It, map1_t, map2_t, 0)
     Ib_rect = cv2.remap(Ib, map1_b, map2_b, 0)
 
+    It_rect = cv2.bilateralFilter(It_rect,5,50,50)
+    Ib_rect = cv2.bilateralFilter(Ib_rect,5,50,50)
+
     return It_rect, Ib_rect
 
 if __name__ == "__main__":

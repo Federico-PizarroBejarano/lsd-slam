@@ -4,7 +4,7 @@ from imageio import imread
 import matplotlib.pyplot as plt
 import cv2
 
-from rectify_images import rectify_images
+from .rectify_images import rectify_images
 
 def get_disparity(It, Ib, maxd):
     """
@@ -56,8 +56,8 @@ def get_disparity(It, Ib, maxd):
     two images. Most importantly, it is very fast. 
     """
  
-    Il = np.transpose(It)
-    Ir = np.transpose(Ib)
+    Il = It.T
+    Ir = Ib.T
 
     Id = np.zeros(Il.shape)
     
@@ -137,7 +137,7 @@ def get_disparity(It, Ib, maxd):
     if not correct:
         raise TypeError("Wrong type or size returned!")
 
-    return np.transpose(Id)
+    return Id.T
 
 
 def census_transform(I, transform_size):
@@ -222,9 +222,6 @@ if __name__ == "__main__":
     T = np.array([0, 0.12, 0])
 
     It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)
-
-    It_rect = cv2.bilateralFilter(It_rect,5,50,50)
-    Ib_rect = cv2.bilateralFilter(Ib_rect,5,50,50)
 
     maxd = 70
 
