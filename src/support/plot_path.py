@@ -2,14 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from imageio import imread
 
-def plot_path(overhead_file, gps_file):
+def plot_path(overhead_file, true_utm_poses, utm_poses = np.array([])):
     overhead = imread(overhead_file)
-    gps = np.genfromtxt(gps_file, delimiter=",")
 
     extent = (625436.02725488, 625563.22725488, 5041709.408990768, 5041778.008990767)
 
     plt.imshow(overhead, extent=extent)
-    plt.scatter(gps[:,1], gps[:,2], s=1, color='b')
+    plt.scatter(true_utm_poses[:,0], true_utm_poses[:,1], s=1, color='b')
+
+    if utm_poses.shape[0] != 0:
+        plt.scatter(utm_poses[:,0], utm_poses[:,1], s=1, color='r')
 
     plt.show()
 

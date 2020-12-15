@@ -21,29 +21,29 @@ def hpose_from_epose(E):
   
     return T
 
-def estimate_movement(It_1, It_2, disparity_1, disparity_2, K, baseline):
+def estimate_movement(It_1, It_2, disparity, K, baseline):
     # Initial guess...
     T = np.array([[1, 0, 0, 0],
                     [0, 1, 0, 0],
                     [0, 0, 1, 0.10],
-                    [0, 0, 0, 1])
+                    [0, 0, 0, 1]])
     C = T[:3, :3]
-    I = np.eye(3)
     rpy = rpy_from_dcm(C).reshape(3, 1)
 
     f = (K[0, 0]+K[1, 1])/2
 
+    iters = 100
     # Iterate.
-    for j in np.arange(iters):
+    for j in range(iters):
         R = []
         J = []
 
-        for y in range(disparity_1.shape[0]):
-            for x in range(disparity_1.shape[1]):
-                if disparity_1[y][x] == 0:
+        for y in range(disparity.shape[0]):
+            for x in range(disparity.shape[1]):
+                if disparity[y][x] == 0:
                     continue
             
-                z = baseline*f/(disparity_1[y][x])
+                z = baseline*f/(disparity[y][x])
                 u = np.array([[x], [y], [1]])
                 p = np.vstack((z * inv(K) @ u, np.array([1])))
                 p_trans = T @ p
@@ -56,9 +56,13 @@ def estimate_movement(It_1, It_2, disparity_1, disparity_2, K, baseline):
 
                 J.append(j)
 
+        R = np.array(R)
+        J = np.array(J)
+
         theta = theta + inv(J.T @ J) @ J.T @ R
         rpy = theta[0:3].reshape(3, 1)
         C = dcm_from_rpy(rpy)
         t = theta[3:6].reshape(3, 1)
 
     T = np.vstack((np.hstack((C, t)), np.array([[0, 0, 0, 1]])))
+    return T
