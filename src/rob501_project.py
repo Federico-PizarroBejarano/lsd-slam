@@ -1,9 +1,8 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from imageio import imread
-import os
 from scipy.spatial.transform import Rotation as R
-from numpy.linalg import inv
 
 from .support.get_disparity import get_disparity
 from .support.rectify_images import rectify_images

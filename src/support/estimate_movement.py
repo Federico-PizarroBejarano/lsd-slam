@@ -27,12 +27,12 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
                     [0, 1, 0, 0],
                     [0, 0, 1, 0.10],
                     [0, 0, 0, 1]])
-    C = T[:3, :3]
-    rpy = rpy_from_dcm(C).reshape(3, 1)
+    E = epose_from_hpose(T)
 
     f = (K[0, 0]+K[1, 1])/2
 
     iters = 100
+
     # Iterate.
     for j in range(iters):
         R = []
@@ -59,10 +59,8 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
         R = np.array(R)
         J = np.array(J)
 
-        theta = theta + inv(J.T @ J) @ J.T @ R
-        rpy = theta[0:3].reshape(3, 1)
-        C = dcm_from_rpy(rpy)
-        t = theta[3:6].reshape(3, 1)
+        E = E + inv(J.T @ J) @ J.T @ R
+        T = hpose_from_epose(E)
 
-    T = np.vstack((np.hstack((C, t)), np.array([[0, 0, 0, 1]])))
+    T = hpose_from_epose(E)
     return T
