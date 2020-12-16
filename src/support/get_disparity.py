@@ -221,7 +221,7 @@ if __name__ == "__main__":
     imageSize = (752, 480)
     T = np.array([0, 0.12, 0])
 
-    It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)
+    It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)[0:2]
 
     maxd = 70
 
