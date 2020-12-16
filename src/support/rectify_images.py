@@ -15,7 +15,7 @@ def rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T):
     It_rect = cv2.bilateralFilter(It_rect,5,50,50)
     Ib_rect = cv2.bilateralFilter(Ib_rect,5,50,50)
 
-    return It_rect, Ib_rect
+    return It_rect, Ib_rect, Pt[0:3, 0:3]
 
 if __name__ == "__main__":
     # Load the stereo images
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     imageSize = (752, 480)
     T = np.array([0, 0.12, 0])
 
-    It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)
+    It_rect, Ib_rect, K = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)
 
     fig = plt.figure()
     ax1 = fig.add_subplot(221)

@@ -21,7 +21,7 @@ def run_project(start_frame, end_frame):
           [0,  0,  1]])
     dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
     db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
-    
+
     imageSize = (752, 480)
     baseline = 0.12
     T = np.array([0, baseline, 0])
@@ -52,13 +52,13 @@ def run_project(start_frame, end_frame):
         It_end = imread(f'./input/run1_base_hr/omni_image4/{filename}', as_gray = True)
         Ib_end = imread(f'./input/run1_base_hr/omni_image5/{filename}', as_gray = True)
 
-        It_end, Ib_end = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
+        It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
         disparity_end =  get_disparity(It_end, Ib_end, maxd) #np.load('disparity.npy') 
 
         if i == int(start_frame):
             movement = initial_movement.T
         else:
-            movement = estimate_movement(It_start, It_end, disparity_start, Kt, baseline)
+            movement = estimate_movement(It_start, It_end, disparity_start, K_rect, baseline)
 
         all_movements[i] = movement.T
         timestamps.append(get_timestamp(filename))
