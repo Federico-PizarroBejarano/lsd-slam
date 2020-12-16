@@ -12,4 +12,9 @@ def get_RMS_error(ground_truth, calculated_pose, timestamps):
 
 def find_closest_pose(ground_truth, time_stamp):
     idx = np.searchsorted(ground_truth[:, 0], time_stamp, side="left")
-    return (ground_truth[idx-1, 1:] + ground_truth[idx, 1:])/2
+    pose0 = ground_truth[idx-1, 1:]
+    pose1 = ground_truth[idx, 1:]
+    t0 = ground_truth[idx-1, 0]
+    t1 = ground_truth[idx, 0]
+    interpolated_pose = pose0 + (time_stamp - t0)*(pose1 - pose0)/(t1 - t0)
+    return interpolated_pose

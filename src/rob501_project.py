@@ -1,7 +1,6 @@
 import os
 from datetime import datetime, timedelta
 import numpy as np
-import matplotlib.pyplot as plt
 from imageio import imread
 from scipy.spatial.transform import Rotation as R
 
@@ -44,7 +43,7 @@ def run_project(start_frame, end_frame):
     timestamps = []
 
     for i in range(start_frame, end_frame+1):
-        frame_str = str(i).zfill(6 - len(str(i)))
+        frame_str = str(i).zfill(6)
 
         It_start = It_end
         disparity_start = disparity_end
@@ -60,7 +59,7 @@ def run_project(start_frame, end_frame):
             movement = initial_movement.T
         else:
             movement = estimate_movement(It_start, It_end, disparity_start, Kt, baseline)
-        
+
         all_movements[i] = movement.T
         timestamps.append(get_timestamp(filename))
 
@@ -84,7 +83,6 @@ def get_timestamp(filename):
     epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
 
     return epoch_time
-
 
 
 if __name__ == "__main__":

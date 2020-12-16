@@ -1,11 +1,10 @@
 import numpy as np
 from imageio import imread
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import cv2
 
 def rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T):
-    Rt, Rb, Pt, Pb, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(Kt, dt, Kb, db, imageSize, np.eye(3), T, alpha=0)
+    Rt, Rb, Pt, Pb = cv2.stereoRectify(Kt, dt, Kb, db, imageSize, np.eye(3), T, alpha=0)[0:4]
 
     map1_t, map2_t = cv2.initUndistortRectifyMap(Kt, dt, Rt, Pt, size=imageSize, m1type=0)
     map1_b, map2_b = cv2.initUndistortRectifyMap(Kb, db, Rb, Pb, size=imageSize, m1type=0)
@@ -31,7 +30,7 @@ if __name__ == "__main__":
           [0,  0,  1]])
     dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
     db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
-    
+
     imageSize = (752, 480)
     T = np.array([0, 0.12, 0])
 
@@ -43,11 +42,13 @@ if __name__ == "__main__":
     ax3 = fig.add_subplot(223) 
     ax4 = fig.add_subplot(224)  
 
-    ax1.imshow(It)
-    ax2.imshow(Ib)
-    ax3.imshow(It_rect)
-    ax4.imshow(Ib_rect)
-
-    print(It.shape, It_rect.shape)
+    ax1.imshow(It, cmap='gray')
+    ax1.title.set_text("Top Image")
+    ax2.imshow(Ib, cmap='gray')
+    ax2.title.set_text("Bottom Image")
+    ax3.imshow(It_rect, cmap='gray')
+    ax3.title.set_text("Rectified Top Image")
+    ax4.imshow(Ib_rect, cmap='gray')
+    ax4.title.set_text("Rectified Bottom Image")
 
     plt.show()
