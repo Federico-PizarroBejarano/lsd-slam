@@ -3,5 +3,3 @@ matplotlib
 scipy
 imageio
 opencv-python
-
-/home/federico/miniconda3/bin:/home/federico/miniconda3/condabin:/home/federico/bin:/home/federico/bin:/home/federico/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
