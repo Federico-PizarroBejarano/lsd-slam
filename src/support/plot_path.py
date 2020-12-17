@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from imageio import imread
 
-def plot_path(overhead_file, true_utm_poses, utm_poses = np.array([])):
+def plot_path(true_utm_poses, utm_poses = np.array([])):
+    overhead_file = './input/raster_data/mosaic_utm_20cm.tif'
     overhead = imread(overhead_file)
 
     extent = (625436.02725488, 625563.22725488, 5041709.408990768, 5041778.008990767)

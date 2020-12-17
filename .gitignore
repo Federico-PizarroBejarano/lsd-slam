@@ -4,6 +4,9 @@
 # Input files
 input*
 
+# Output files
+*.npy
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

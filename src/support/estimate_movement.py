@@ -9,7 +9,7 @@ from .dcm_from_rpy import dcm_from_rpy
 
 
 def estimate_movement(It_1, It_2, disparity, K, baseline):
-    Initial guess...
+    # Initial guess...
     T = np.array([[1, 0, 0, 0],
                     [0, 1, 0, 0],
                     [0, 0, 1, 0.1],
@@ -20,21 +20,26 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     cx = K[0, 2]
     cy = K[1, 2]
     grad_I2 = np.gradient(It_2)
+    inv_K = inv(K)
 
-    iters = 100
+    iters = 30
     alpha = 1
 
     valid_points = np.transpose(disparity.nonzero())
+    valid_points = valid_points[np.random.choice(valid_points.shape[0], min(valid_points.shape[0], 5000), replace=False)]
+    print("Number of valid points: ", valid_points.shape[0])
+
+    R = np.zeros((valid_points.shape[0], 1))
+    J = np.zeros((valid_points.shape[0], 6))
 
     for iteration in range(iters):
-        R = []
-        J = []
 
-        for v, u in valid_points:  
+        for point in range(valid_points.shape[0]):
+            v, u = valid_points[point]  
             d = disparity[v][u]      
             z_calc = baseline*f/d
             u_initial = np.array([[u], [v], [1]])
-            p = np.vstack((z_calc * inv(K) @ u_initial, np.array([1])))
+            p = np.vstack((z_calc * inv_K @ u_initial, np.array([1])))
             p_trans = T @ p
             u_trans = K @ np.array([[p_trans[0, 0]/p_trans[2, 0]], [p_trans[1, 0]/p_trans[2, 0]], [1]])
 
@@ -45,24 +50,26 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
                 v2, u2 = 0, 0
                 r = It_1[v][u]
 
-            R.append(r)
+            R[point, 0] = r
 
             j = get_jacobian(z_calc, u, v, u2, v2, f, cx, cy, baseline, E, grad_I2)
+            J[point, :] = j
 
-            J.append(j)
-
-        R = np.array(R).reshape(len(R), 1)
-        J = np.array(J).reshape(len(J), 6)
-        print(E, np.sum(np.square(R))/R.shape[0], iteration)
+        error = np.sum(np.square(R))/R.shape[0]
+        print(f'Calculating movement. Error: {error}, Iteration: {iteration}')
         E = E + alpha * inv(J.T @ J) @ J.T @ R
         T = hpose_from_epose(E)
 
+        if error <= 400:
+            break
+
     T = hpose_from_epose(E)
-    return T
+    E = epose_from_hpose(inv(T))
+    return E
 
 
 def get_jacobian(z_calc, u1, v1, u2, v2, f, cx, cy, baseline, E, grad_I2):
-    x, y, z, roll, pitch, yaw = E
+    x, y, z, roll, pitch, yaw = E.T[0]
 
     du_dx, dv_dx = get_dx(z_calc, u1, v1, f, cx, cy, baseline, x, y, z, roll, pitch, yaw)
     du_dy, dv_dy = get_dy(z_calc, u1, v1, f, cx, cy, baseline, x, y, z, roll, pitch, yaw)

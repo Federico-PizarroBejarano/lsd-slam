@@ -130,13 +130,16 @@ def get_disparity(It, Ib, maxd):
     # Use the median filter to smooth out disparity values
     Id = median_filter(Id, size = median_window_size)
 
-    print("Percent of image used: ", useful_pixels.sum()/(Id.shape[0] * Id.shape[1]))
+    print("Percent of image used: ", 100*(Id>0).sum()/(Id.shape[0] * Id.shape[1]))
 
     correct = isinstance(Id, np.ndarray) and Id.shape == Il.shape
 
     if not correct:
         raise TypeError("Wrong type or size returned!")
 
+    Id[Id >= maxd - 10] = 0
+    # plt.imshow(-Id.T, cmap='gray')
+    # plt.show()
     return Id.T
 
 
@@ -235,5 +238,3 @@ if __name__ == "__main__":
     ax2.imshow(Ib_rect, cmap='gray')
     ax3.imshow(-Id, cmap='gray')
     plt.show()
-
-    print(np.max(Id), np.min(Id), 100*(Id>0).sum()/(Id.shape[0] * Id.shape[1]))

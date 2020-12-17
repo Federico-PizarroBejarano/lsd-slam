@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime, timedelta
 import numpy as np
 from imageio import imread
@@ -13,6 +14,7 @@ from .support.get_RMS_error import get_RMS_error
 
 
 def run_project(start_frame, end_frame):
+    start_time = time.time()
     Kt = np.array([[473.571, 0,  378.17],
           [0,  477.53, 212.577],
           [0,  0,  1]])
@@ -28,7 +30,6 @@ def run_project(start_frame, end_frame):
     maxd = 70
 
     num_images = int(end_frame) - int(start_frame)
-    all_movements = np.zeros((num_images+1, 6))
 
     ground_truth = np.genfromtxt("./input/run1_base_hr/global-pose-utm.txt", delimiter=',')
     ground_truth_utm = ground_truth[:, 0:3]
@@ -40,7 +41,11 @@ def run_project(start_frame, end_frame):
     initial_movement[0, 3:] = R.from_quat(initial_pose[3:]).as_euler('xyz')
 
     files = os.listdir('./input/run1_base_hr/omni_image4')
+    all_movements = []
     timestamps = []
+
+    It_end = []
+    disparity_end = []
 
     for i in range(start_frame, end_frame+1):
         frame_str = str(i).zfill(6)
@@ -53,23 +58,28 @@ def run_project(start_frame, end_frame):
         Ib_end = imread(f'./input/run1_base_hr/omni_image5/{filename}', as_gray = True)
 
         It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
-        disparity_end =  get_disparity(It_end, Ib_end, maxd) #np.load('disparity.npy') 
+        disparity_end =  get_disparity(It_end, Ib_end, maxd) 
+        # disparity_end = np.load(f'disparity_{i}.npy')
+        np.save(f'disparity_{i}', disparity_end)
 
         if i == int(start_frame):
             movement = initial_movement.T
         else:
             movement = estimate_movement(It_start, It_end, disparity_start, K_rect, baseline)
 
-        all_movements[i] = movement.T
+        all_movements.append(movement.T[0])
+        print('Movement: ', movement, 'Time: ', time.time() - start_time)
         timestamps.append(get_timestamp(filename))
 
-    all_utm_poses = get_utm_poses(all_movements)
+    print('All Movement: ', all_movements, 'Time: ', time.time() - start_time)
+    all_utm_poses = get_utm_poses(np.array(all_movements))
+    print('All UTM Poses: ', all_utm_poses, 'Time: ', time.time() - start_time)
 
-    RMS_error = get_RMS_error(ground_truth_utm, all_utm_poses, timestamps)
-    print(f'RMS Error: {RMS_error}')
+    RMS_error, closest_path = get_RMS_error(ground_truth_utm, all_utm_poses, timestamps)
+    print('RMS Error: ', RMS_error)
+    print('Runtime: ', time.time()-start_time)
 
-    overhead_file = './input/raster_data/mosaic_utm_20cm.tif'
-    plot_path(overhead_file, ground_truth_utm[:, 1:], all_utm_poses)
+    plot_path(closest_path, all_utm_poses)
 
 
 def get_filename(files, frame):
@@ -86,4 +96,4 @@ def get_timestamp(filename):
 
 
 if __name__ == "__main__":
-    run_project(0, 1000)
+    run_project(70, 80)
