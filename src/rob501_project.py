@@ -11,6 +11,7 @@ from .support.estimate_movement import estimate_movement
 from .support.plot_path import plot_path
 from .support.get_utm_poses import get_utm_poses
 from .support.get_RMS_error import get_RMS_error
+from .support.convert_time import convert_date_string_to_unix_seconds
 
 
 def run_project(start_frame, end_frame):
@@ -88,10 +89,7 @@ def get_filename(files, frame):
 
 def get_timestamp(filename):
     time_str = filename.split('frame')[1][7:-4]
-
-    utc_time = datetime.strptime(time_str, "%Y_%m_%d_%H_%M_%S_%f") + timedelta(hours=4)
-    epoch_time = (utc_time - datetime(1970, 1, 1)).total_seconds()
-
+    epoch_time = convert_date_string_to_unix_seconds(time_str)
     return epoch_time
 
 
