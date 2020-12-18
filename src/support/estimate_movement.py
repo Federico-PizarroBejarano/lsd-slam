@@ -4,8 +4,7 @@ from imageio import imread
 
 from .calculate_jacobians import *
 from .rectify_images import rectify_images
-from .rpy_from_dcm import rpy_from_dcm
-from .dcm_from_rpy import dcm_from_rpy
+from .transforms import rpy_from_dcm, dcm_from_rpy, epose_from_hpose, hpose_from_epose
 
 
 def estimate_movement(It_1, It_2, disparity, K, baseline):
@@ -91,24 +90,6 @@ def get_jacobian(z_calc, u1, v1, u2, v2, f, cx, cy, baseline, E, grad_I2):
     j = np.array([dI_dx, dI_dy, dI_dz, dI_droll, dI_dpitch, dI_dyaw])
     
     return j
-
-
-def epose_from_hpose(T):
-    """Covert 4x4 homogeneous pose matrix to x, y, z, roll, pitch, yaw."""
-    E = np.zeros((6, 1))
-    E[0:3] = np.reshape(T[0:3, 3], (3, 1))
-    E[3:6] = rpy_from_dcm(T[0:3, 0:3])
-  
-    return E
-
-def hpose_from_epose(E):
-    """Covert x, y, z, roll, pitch, yaw to 4x4 homogeneous pose matrix."""
-    T = np.zeros((4, 4))
-    T[0:3, 0:3] = dcm_from_rpy(E[3:6])
-    T[0:3, 3] = np.reshape(E[0:3], (3,))
-    T[3, 3] = 1
-  
-    return T
 
 
 if __name__ == "__main__":

@@ -10,8 +10,9 @@ from .support.rectify_images import rectify_images
 from .support.estimate_movement import estimate_movement
 from .support.plot_path import plot_path
 from .support.get_utm_poses import get_utm_poses
-from .support.get_RMS_error import get_RMS_error
+from .support.get_RMS_error import get_RMS_error, find_closest_pose
 from .support.convert_time import convert_date_string_to_unix_seconds
+from .support.transforms import transform_robot_to_camera
 
 
 def run_project(start_frame, end_frame):
@@ -31,17 +32,19 @@ def run_project(start_frame, end_frame):
     maxd = 70
 
     num_images = int(end_frame) - int(start_frame)
+    files = os.listdir('./input/run1_base_hr/omni_image4')
 
     ground_truth = np.genfromtxt("./input/run1_base_hr/global-pose-utm.txt", delimiter=',')
     ground_truth_utm = ground_truth[:, 0:3]
 
-    initial_pose = ground_truth[start_frame, 1:]
+    initial_pose = find_closest_pose(ground_truth, get_timestamp(get_filename(files, str(start_frame).zfill(6))))
     initial_movement = np.zeros((1, 6))
 
     initial_movement[0, 0:3] = initial_pose[0:3]
     initial_movement[0, 3:] = R.from_quat(initial_pose[3:]).as_euler('xyz')
 
-    files = os.listdir('./input/run1_base_hr/omni_image4')
+    initial_movement = transform_robot_to_camera(initial_movement.T).T
+
     all_movements = []
     timestamps = []
 
@@ -59,9 +62,9 @@ def run_project(start_frame, end_frame):
         Ib_end = imread(f'./input/run1_base_hr/omni_image5/{filename}', as_gray = True)
 
         It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
-        disparity_end =  get_disparity(It_end, Ib_end, maxd) 
-        # disparity_end = np.load(f'disparity_{i}.npy')
-        np.save(f'disparity_{i}', disparity_end)
+        # disparity_end =  get_disparity(It_end, Ib_end, maxd) 
+        disparity_end = np.load(f'./output/disparity_{i}.npy')
+        np.save(f'./output/disparity_{i}', disparity_end)
 
         if i == int(start_frame):
             movement = initial_movement.T
@@ -69,7 +72,7 @@ def run_project(start_frame, end_frame):
             movement = estimate_movement(It_start, It_end, disparity_start, K_rect, baseline)
 
         all_movements.append(movement.T[0])
-        print('Movement: ', movement, 'Time: ', time.time() - start_time)
+        print('Frame: ', i, 'Movement: ', movement, 'Time: ', time.time() - start_time)
         timestamps.append(get_timestamp(filename))
 
     print('All Movement: ', all_movements, 'Time: ', time.time() - start_time)
@@ -80,7 +83,7 @@ def run_project(start_frame, end_frame):
     print('RMS Error: ', RMS_error)
     print('Runtime: ', time.time()-start_time)
 
-    plot_path(closest_path, all_utm_poses)
+    plot_path(np.array([]), closest_path, all_utm_poses)
 
 
 def get_filename(files, frame):
@@ -94,4 +97,4 @@ def get_timestamp(filename):
 
 
 if __name__ == "__main__":
-    run_project(70, 80)
+    run_project(70, 74)
