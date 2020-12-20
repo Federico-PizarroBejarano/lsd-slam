@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 def check_outlier(movement):
-    if np.linalg.norm(movement[0:3]) > 0.25:
+    if np.linalg.norm(movement[0:3]) > 0.4:
         print("movement")
         return True
     

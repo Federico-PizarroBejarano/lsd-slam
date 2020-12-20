@@ -21,17 +21,27 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     grad_I2 = np.gradient(It_2)
     inv_K = inv(K)
 
-    iters = 30
+    iters = 25
     alpha = 1
 
+    border = 20
+    width = It_1.shape[1]
+    height = It_1.shape[0]
+    edge_mask = np.zeros(It_1.shape)
+    edge_mask[border:height-border, border:width-border] = np.ones((height - border*2, width - border*2))
+    disparity[edge_mask == 0] = 0
+
     valid_points = np.transpose(disparity.nonzero())
-    valid_points = valid_points[np.random.choice(valid_points.shape[0], min(valid_points.shape[0], 5000), replace=False)]
+    valid_points = valid_points[np.random.choice(valid_points.shape[0], min(valid_points.shape[0], 15000), replace=False)]
     print("Number of valid points: ", valid_points.shape[0])
 
     R = np.zeros((valid_points.shape[0], 1))
     J = np.zeros((valid_points.shape[0], 6))
+    error = 0
+    no_change_counter = 0
 
     for iteration in range(iters):
+        previous_error = error
 
         for point in range(valid_points.shape[0]):
             v, u = valid_points[point]  
@@ -59,12 +69,20 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
         E = E + alpha * inv(J.T @ J) @ J.T @ R
         T = hpose_from_epose(E)
 
-        if error <= 300:
+        if error <= 200:
+            break
+        
+        if abs(previous_error - error) < 10:
+            no_change_counter += 1
+        else:
+            no_change_counter = 0
+
+        if no_change_counter >= 4:
             break
 
     T = hpose_from_epose(E)
     E = epose_from_hpose(inv(T))
-    return E
+    return E, error
 
 
 def get_jacobian(z_calc, u1, v1, u2, v2, f, cx, cy, baseline, E, grad_I2):

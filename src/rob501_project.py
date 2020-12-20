@@ -42,15 +42,16 @@ def run_project(start_frame, end_frame):
 
     TSR = np.eye(4)
     TSR[0:3, 3] = initial_pose[0:3].T
-    TSR[0:3, 0:3] = np.linalg.inv(R.from_quat(initial_pose[3:]).as_matrix())
+    TSR[0:3, 0:3] = R.from_quat(initial_pose[3:]).as_matrix()
     initial_movement = epose_from_hpose(TSR)
 
     all_movements = []
     timestamps = []
+    error_threshold = 1500
 
     It_end = []
     disparity_end = []
-    movement_dictionary = {} #np.load('./output/movements.npy', allow_pickle = True).item()
+    movement_dictionary = np.load('./output/movements3.npy', allow_pickle = True).item()
 
     for i in range(start_frame, end_frame+1):
         frame_str = str(i).zfill(6)
@@ -63,9 +64,9 @@ def run_project(start_frame, end_frame):
         Ib_end = imread(f'./input/run1_base_hr/omni_image5/{filename}', as_gray = True)
 
         It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
-        #disparity_end =  get_disparity(It_end, Ib_end, maxd) 
-        disparity_end = np.load(f'./output/disparity_{i}.npy')
-        #np.save(f'./output/disparity_{i}', disparity_end)
+        disparity_end =  get_disparity(It_end, Ib_end, maxd) 
+        # disparity_end = np.load(f'./output/disparity_{i}.npy')
+        np.save(f'./output/disparity_{i}', disparity_end)
 
         if i == int(start_frame):
             movement = initial_movement
@@ -73,18 +74,19 @@ def run_project(start_frame, end_frame):
             timestamps.append(get_timestamp(filename))
         else:
             if i in movement_dictionary:
-                movement = movement_dictionary[i]
+                movement, error = movement_dictionary[i] # = np.array([[0, 0, 0.1, 0, 0, 0]]).T#
             else:
-                movement = estimate_movement(It_start, It_end, disparity_start, K_rect, baseline)
+                movement, error = estimate_movement(It_start, It_end, disparity_start, K_rect, baseline)
         
-            # if not check_outlier(movement) and i != int(start_frame):
+            # if check_outlier(movement) == False and error <= error_threshold:
             all_movements.append(movement.T[0])
             timestamps.append(get_timestamp(filename))
-
-    for i in range(1, len(all_movements)):
-        movement_dictionary[start_frame+i] = np.reshape(all_movements[i], (6, 1))
-
-    np.save('./output/movement_dictionary.npy', movement_dictionary)
+            # else:
+            #     print('outlier', check_outlier(movement), error)
+            movement_dictionary[i] = (movement, error)
+            np.save('./output/movements3.npy', movement_dictionary)
+        
+        print(f'Frame: {i}')        
 
     print('All Movement: ', all_movements, 'Time: ', time.time() - start_time)
     all_utm_poses = get_utm_poses(np.array(all_movements))
@@ -108,4 +110,4 @@ def get_timestamp(filename):
 
 
 if __name__ == "__main__":
-    run_project(185, 200)
+    run_project(1844, 1900)
