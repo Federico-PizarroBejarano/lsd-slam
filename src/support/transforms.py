@@ -2,11 +2,21 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 def TR_C():
+    """
+    Returns the homogenous transformation matrix from the rover body frame to omni camera 4 frame.
+
+    Returns
+    -------
+    TR_4 (np.ndarray): a 4x4 numpy array representing the robot-to-camera transform
+    """
+
+    # Find transform from rover to omni-camera frame
     TR_O = np.zeros((4, 4))
     # TR_O[0:3, [3]] = np.array([[0.236, -0.129, 0.845]]).T 
     TR_O[0:3, 0:3] = R.from_quat([-0.630,-0.321,0.321,0.630]).as_matrix()
     TR_O[3, 3] = 1
 
+    # Find transform from omni-camera frame to omni-camera 4 frame
     TO_4 = np.zeros((4, 4))
     # TO_4[0:3, [3]] = np.array([[0.030, 0.013, -0.046]]).T 
     TO_4[0:3, 0:3] = R.from_quat([0.006, 0.950, -0.002, 0.311]).as_matrix()
@@ -17,11 +27,31 @@ def TR_C():
     return TR_4
 
 def TC_R():
+    """
+    Returns the homogenous transformation matrix from the omni camera 4 frame to rover body frame.
+
+    Returns
+    -------
+    T4_R (np.ndarray): a 4x4 numpy array representing the camera-to-robot transform
+    """
+
+    # Return inverse of TR_C matrix
     return np.linalg.inv(TR_C())
     
 
 def epose_from_hpose(T):
-    """Covert 4x4 homogeneous pose matrix to x, y, z, roll, pitch, yaw."""
+    """
+    Covert 4x4 homogeneous pose matrix to x, y, z, roll, pitch, yaw.
+    
+    Parameters:
+    -----------
+    T (np.ndarray): a 4x4 numpy array representing the homogenous transform
+
+    Returns
+    -------
+    E (np.ndarray): a 6x1 numpy array representing the twist (x, y, z, roll, pitch, yaw)
+    """
+
     E = np.zeros((6, 1))
     E[0:3] = np.reshape(T[0:3, 3], (3, 1))
     E[3:6] = rpy_from_dcm(T[0:3, 0:3])
@@ -29,7 +59,18 @@ def epose_from_hpose(T):
     return E
 
 def hpose_from_epose(E):
-    """Covert x, y, z, roll, pitch, yaw to 4x4 homogeneous pose matrix."""
+    """
+    Covert x, y, z, roll, pitch, yaw to 4x4 homogeneous pose matrix.
+    
+    Parameters:
+    -----------
+    E (np.ndarray): a 6x1 numpy array representing the twist (x, y, z, roll, pitch, yaw)
+
+    Returns
+    -------
+    T (np.ndarray): a 4x4 numpy array representing the homogenous transform
+    """
+
     T = np.zeros((4, 4))
     T[0:3, 0:3] = dcm_from_rpy(E[3:6])
     T[0:3, 3] = np.reshape(E[0:3], (3,))
@@ -62,11 +103,11 @@ def dcm_from_rpy(rpy):
 
     Parameters:
     -----------
-    rpy  - 3x1 np.array of roll, pitch, yaw Euler angles.
+    rpy (np.ndarray): 3x1 np.array of roll, pitch, yaw Euler angles.
 
     Returns:
     --------
-    R  - 3x3 np.array, orthonormal rotation matrix.
+    R (np.ndarray): 3x3 np.array, orthonormal rotation matrix.
     """
     cr = np.cos(rpy[0]).item()
     sr = np.sin(rpy[0]).item()
@@ -88,13 +129,13 @@ def rpy_from_dcm(R):
     rotation matrix R. The pitch angle p is constrained to the range
     (-pi/2, pi/2].  The returned angles are in radians.
 
-    Inputs:
+    Parameters:
     -------
-    R  - 3x3 orthonormal rotation matrix.
+    R (np.ndarray): 3x3 orthonormal rotation matrix.
 
     Returns:
     --------
-    rpy  - 3x1 np.array of roll, pitch, yaw Euler angles.
+    rpy (np.ndarray): 3x1 np.array of roll, pitch, yaw Euler angles.
     """
     rpy = np.zeros((3, 1))
 

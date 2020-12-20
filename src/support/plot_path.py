@@ -3,6 +3,21 @@ import matplotlib.pyplot as plt
 from imageio import imread
 
 def plot_path(full_path = np.array([]), interpolated_path = np.array([]), calculated_path = np.array([])):
+    """
+    Plots paths of the rover onto the overhead image. The paths must be supplied as numpy arrays of 
+    utm coordinates. 
+
+    Parameters
+    ----------
+    full_path (np.ndarray, optional): a numpy array where each row contains the utm coordinates of the rover.
+        Represents the entire path of the rover using ground truth. Plotted in blue. 
+    interpolated_path (np.ndarray, optional): a numpy array where each row contains the utm coordinates of the rover.
+        Represents the interpolated path of the rover at the timestamps of the frames used in the calculation.
+        Plotted in green.
+    calculated_path (np.ndarray, optional): a numpy array where each row contains the utm coordinates of the rover.
+        Represents the calculated path of the rover. Plotted in Red.
+    """
+
     overhead_file = './input/raster_data/mosaic_utm_20cm.tif'
     overhead = imread(overhead_file)
 

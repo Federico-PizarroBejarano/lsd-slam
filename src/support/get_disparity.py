@@ -6,21 +6,19 @@ import cv2
 
 from .rectify_images import rectify_images
 
-def get_disparity(It, Ib, maxd):
+def get_disparity(It, Ib):
     """
     This function computes a stereo disparity image from top stereo 
     image It and bottom stereo image Ib. 
 
     Parameters:
     -----------
-    It    - Top stereo image, m x n pixel np.array, greyscale.
-    Ib    - Bottom stereo image, m x n pixel np.array, greyscale.
-    maxd  - Integer, maximum disparity value; disparities must be within zero
-            to maxd inclusive (i.e., don't search beyond maxd).
+    It (np.ndarray): Top stereo image, m x n pixel np.array, greyscale.
+    Ib (np.ndarray): Bottom stereo image, m x n pixel np.array, greyscale.
 
     Returns:
     --------
-    Id  - Disparity image (map) as np.array, same size as It.
+    Id (np.ndarray): Disparity image (map) as np.array, same size as It.
     """
     
     """ Algorithm used: Census Transform
@@ -65,9 +63,11 @@ def get_disparity(It, Ib, maxd):
         # window: window size for SAD
         # transform_size: window size for census transform 
         # median_window_size: size of median filter used at the end
+        # maxd: maximum disparity value; disparities must be within zero and maxd
     window = 20
     transform_size = 3
     median_window_size = 15
+    maxd = 70
    
     height = Il.shape[0]
     width = Il.shape[1]
@@ -130,16 +130,8 @@ def get_disparity(It, Ib, maxd):
     # Use the median filter to smooth out disparity values
     Id = median_filter(Id, size = median_window_size)
 
-    print("Percent of image used: ", 100*(Id>0).sum()/(Id.shape[0] * Id.shape[1]))
-
-    correct = isinstance(Id, np.ndarray) and Id.shape == Il.shape
-
-    if not correct:
-        raise TypeError("Wrong type or size returned!")
-
     Id[Id >= maxd - 10] = 0
-    # plt.imshow(-Id.T, cmap='gray')
-    # plt.show()
+
     return Id.T
 
 
@@ -149,12 +141,12 @@ def census_transform(I, transform_size):
 
     Parameters:
     -----------
-    I               - An image, m x n pixel np.array, greyscale.
-    transform_size  - The window size of the transform
+    I (np.ndarray): an image, m x n pixel np.array, greyscale.
+    transform_size (int): The window size of the transform
 
     Returns:
     --------
-    I_ct            - An m x n np.array representing the census-transformed image
+    I_ct (np.ndarray): a m x n np.array representing the census-transformed image
     """
     
     I_ct = np.zeros(I.shape)
@@ -191,11 +183,11 @@ def hamming_distance(xor_num):
 
     Parameters:
     -----------
-    xor_num   - A Python int that represents two numbers that have been XOR'ed
+    xor_num (int): an integer that represents two numbers that have been XOR'ed
 
     Returns:
     --------
-    hamming_dist  - An integer of the hamming distance
+    hamming_dist (int): the hamming distance
     """
     
     # Converts the int to a binary number and counts the number of 1s
@@ -208,10 +200,8 @@ if __name__ == "__main__":
     # Load the stereo images
     It = imread('./input/run1_base_hr/omni_image4/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
     Ib = imread('./input/run1_base_hr/omni_image5/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
-    
-    # It = imread('./input/run1_base_hr/omni_image4/frame001577_2018_09_04_17_25_40_946193.png', as_gray = True)
-    # Ib = imread('./input/run1_base_hr/omni_image5/frame001577_2018_09_04_17_25_40_946193.png', as_gray = True)
 
+    # Camera intrinsic matrixes and distortion arrays
     Kt = np.array([[473.571, 0,  378.17],
           [0,  477.53, 212.577],
           [0,  0,  1]])
@@ -224,12 +214,13 @@ if __name__ == "__main__":
     imageSize = (752, 480)
     T = np.array([0, 0.12, 0])
 
+    # Rectifying images
     It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)[0:2]
 
-    maxd = 70
+    # Calculate disparity
+    Id = get_disparity(It_rect, Ib_rect)
 
-    Id = get_disparity(It_rect, Ib_rect, maxd)
-
+    # Plotting rectified images and disparity
     fig = plt.figure()
     ax1 = fig.add_subplot(221)
     ax2 = fig.add_subplot(222)
