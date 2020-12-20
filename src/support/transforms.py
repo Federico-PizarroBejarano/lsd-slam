@@ -1,44 +1,23 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-
-def transform_robot_to_camera(Erobot):
+def TR_C():
     TR_O = np.zeros((4, 4))
-    TR_O[0:3, [3]] = np.array([[0.236, -0.129, 0.845]]).T 
+    # TR_O[0:3, [3]] = np.array([[0.236, -0.129, 0.845]]).T 
     TR_O[0:3, 0:3] = R.from_quat([-0.630,-0.321,0.321,0.630]).as_matrix()
     TR_O[3, 3] = 1
 
     TO_4 = np.zeros((4, 4))
-    TO_4[0:3, [3]] = np.array([[0.030, 0.013, -0.046]]).T 
+    # TO_4[0:3, [3]] = np.array([[0.030, 0.013, -0.046]]).T 
     TO_4[0:3, 0:3] = R.from_quat([0.006, 0.950, -0.002, 0.311]).as_matrix()
     TO_4[3, 3] = 1
-
-    TR_4 = TR_O @ TO_4
     
-    T_R = hpose_from_epose(Erobot)
-    T_4 = T_R @ TR_4
-
-    return epose_from_hpose(T_4)
-
-
-def transform_camera_to_robot(Ecamera):
-    TR_O = np.zeros((4, 4))
-    TR_O[0:3, [3]] = np.array([[0.236, -0.129, 0.845]]).T 
-    TR_O[0:3, 0:3] = R.from_quat([-0.630,-0.321,0.321,0.630]).as_matrix()
-    TR_O[3, 3] = 1
-
-    TO_4 = np.zeros((4, 4))
-    TO_4[0:3, [3]] = np.array([[0.030, 0.013, -0.046]]).T 
-    TO_4[0:3, 0:3] = R.from_quat([0.006, 0.950, -0.002, 0.311]).as_matrix()
-    TO_4[3, 3] = 1
-
     TR_4 = TR_O @ TO_4
-    T4_R = np.linalg.inv(TR_4)
 
-    T_4 = hpose_from_epose(Ecamera)
-    T_R = T_4 @ T4_R
+    return TR_4
 
-    return epose_from_hpose(T_R)
+def TC_R():
+    return np.linalg.inv(TR_C())
     
 
 def epose_from_hpose(T):

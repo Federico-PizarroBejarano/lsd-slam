@@ -11,7 +11,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     # Initial guess...
     T = np.array([[1, 0, 0, 0],
                     [0, 1, 0, 0],
-                    [0, 0, 1, 0.1],
+                    [0, 0, 1, -0.1],
                     [0, 0, 0, 1]])
     E = epose_from_hpose(T)
 
@@ -59,7 +59,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
         E = E + alpha * inv(J.T @ J) @ J.T @ R
         T = hpose_from_epose(E)
 
-        if error <= 400:
+        if error <= 300:
             break
 
     T = hpose_from_epose(E)

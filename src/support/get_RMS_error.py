@@ -9,7 +9,6 @@ def get_RMS_error(ground_truth, calculated_poses, timestamps):
         closest_truth = find_closest_pose(ground_truth, timestamps[i])
         closest_path[i, :] = closest_truth
 
-        print(f'Frame #: {i}, True Pose: {closest_truth}, Calculated Pose: {calculated_poses[i]}')
         error += np.linalg.norm(calculated_poses[i] - closest_truth)**2
 
     return math.sqrt(error/len(timestamps)), closest_path
