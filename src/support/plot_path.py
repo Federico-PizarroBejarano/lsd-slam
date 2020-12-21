@@ -23,7 +23,6 @@ def plot_path(full_path = np.array([]), interpolated_path = np.array([]), calcul
 
     extent = (625436.02725488, 625563.22725488, 5041709.408990768, 5041778.008990767)
 
-    # plt.ion()
     plt.imshow(overhead, extent=extent)
 
     if full_path.shape[0] > 0:

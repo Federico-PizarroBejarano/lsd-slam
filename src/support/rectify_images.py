@@ -1,6 +1,4 @@
 import numpy as np
-from imageio import imread
-import matplotlib.pyplot as plt
 import cv2
 
 def rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T):

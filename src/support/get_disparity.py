@@ -1,10 +1,6 @@
 import numpy as np
 from scipy.ndimage.filters import correlate, median_filter
-from imageio import imread
-import matplotlib.pyplot as plt
 import cv2
-
-from rectify_images import rectify_images
 
 def get_disparity(It, Ib):
     """
