@@ -63,14 +63,14 @@ def run_project(start_frame, end_frame):
 
         # Read in new images
         filename = get_filename(files, frame)
-        #It_end = imread(f'./input/run1_base_hr/omni_image4/{filename}', as_gray = True)
-        #Ib_end = imread(f'./input/run1_base_hr/omni_image5/{filename}', as_gray = True)
+        It_end = imread(f'./input/run1_base_hr/omni_image4/{filename}', as_gray = True)
+        Ib_end = imread(f'./input/run1_base_hr/omni_image5/{filename}', as_gray = True)
 
         # Rectify new images and calculate disparity
-        #It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
-        #disparity_end =  get_disparity(It_end, Ib_end) 
-        disparity_end = np.load(f'./output/disparity_{frame}.npy')
-        #np.save(f'./output/disparity_{frame}', disparity_end)
+        It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
+        disparity_end =  get_disparity(It_end, Ib_end) 
+        # disparity_end = np.load(f'./output/disparity_{frame}.npy')
+        np.save(f'./output/disparity_{frame}', disparity_end)
 
         # If it is the first frame, set first movement to inital_movement
         if frame == int(start_frame):
@@ -80,15 +80,14 @@ def run_project(start_frame, end_frame):
         else:
             if frame in movement_dictionary:
                 movement, error = movement_dictionary[frame]
+                movement[0:3] *= 1.5
             else:
                 # Estimate the movement from the two top images and the disparity
                 movement, error = estimate_movement(It_start, It_end, disparity_start, K_rect, baseline)
         
-            if True or check_outlier(movement, error) == False:
+            if check_outlier(movement, error) == False:
                 all_movements.append(movement.T[0])
                 timestamps.append(get_unix_timestamp(filename))
-            # else:
-            #     print('outlier', check_outlier(movement), error)
             # movement_dictionary[frame] = (movement, error)
             # np.save('./output/movements3.npy', movement_dictionary)
         
@@ -110,4 +109,4 @@ def run_project(start_frame, end_frame):
 
 
 if __name__ == "__main__":
-    run_project(1600, 1826)
+    run_project(1750, 1770)

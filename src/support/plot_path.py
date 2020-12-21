@@ -26,18 +26,13 @@ def plot_path(full_path = np.array([]), interpolated_path = np.array([]), calcul
     plt.imshow(overhead, extent=extent)
 
     if full_path.shape[0] > 0:
-        plt.scatter(full_path[:,0], full_path[:,1], s=1, color='b')
+        plt.scatter(full_path[:,0], full_path[:,1], s=1, color='b', label='Full Path')
 
     if interpolated_path.shape[0] > 0:
-        plt.scatter(interpolated_path[:,0], interpolated_path[:,1], s=1, color='g')
-
-        for i in range(interpolated_path.shape[0]):
-            plt.annotate(i, (interpolated_path[i, 0], interpolated_path[i, 1]))
+        plt.scatter(interpolated_path[:,0], interpolated_path[:,1], s=1, color='g', label='True Path')
     
     if calculated_path.shape[0] > 0:
-        plt.scatter(calculated_path[:,0], calculated_path[:,1], s=1, color='r')
+        plt.scatter(calculated_path[:,0], calculated_path[:,1], s=1, color='r', label='Calculated Path')
 
-        for i in range(calculated_path.shape[0]):
-            plt.annotate(i, (calculated_path[i, 0], calculated_path[i, 1]))
-
+    plt.legend()
     plt.show()

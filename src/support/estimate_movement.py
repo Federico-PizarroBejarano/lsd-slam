@@ -31,7 +31,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
                     [0, 1, 0, 0],
                     [0, 0, 1, -0.1],
                     [0, 0, 0, 1]])
-    E = epose_from_hpose(T)
+    E = epose_from_hpose(T) + np.random.rand(6, 1)/1000
 
     # Setting up useful variables
     f = (K[0, 0]+K[1, 1])/2
@@ -72,7 +72,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
             z_calc = baseline*f/d
 
             # Calculate residuals related to point
-            r, u2, v2 = get_residual(z_calc, u, v, f, baseline, K, inv_K, T, It_1, It_2)
+            r, u2, v2 = get_residual(z_calc, u, v, K, inv_K, T, It_1, It_2)
             R[point, 0] = r
 
             # Calculate jacobian of residual at point
@@ -91,7 +91,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
         if error <= 200:
             break
 
-        if abs(previous_error - error) < 10:
+        if abs(previous_error - error) < 20:
             no_change_counter += 1
         else:
             no_change_counter = 0
@@ -105,7 +105,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     return E, error
 
 
-def get_residual(z_calc, u, v, f, baseline, K, inv_K, T, It_1, It_2):
+def get_residual(z_calc, u, v, K, inv_K, T, It_1, It_2):
     """
     Calculate the photometric residual at a point given two images and the disparity map
 
@@ -114,8 +114,6 @@ def get_residual(z_calc, u, v, f, baseline, K, inv_K, T, It_1, It_2):
     z_calc (float): Calculated depth of point from disparity
     u (int): u coordinate of point in the template (first) image
     v (int): v coordinate of point in the template (first) image
-    f (float): focal length of camera
-    baseline (float): the distance between the two stereo cameras used to create the disparity map
     K (np.ndarray): the instrinic camera matrix
     inv_K (np.ndarray): the inverse of K
     T (np.ndarray): a 4x4 numpy array representing the current estimate for the homogenous transform

@@ -17,9 +17,9 @@ def check_outlier(movement, error):
     outlier_status (boolean): True if it is an outlier, False otherwise.
     """
 
-    error_threshold = 1500
-    translation_threshold = 0.4
-    rotation_threshold = 0.2
+    error_threshold = 2000
+    translation_threshold = 0.5
+    rotation_threshold = 0.4
 
     if error > error_threshold:
         return True
