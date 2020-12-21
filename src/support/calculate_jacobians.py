@@ -21,8 +21,8 @@ The input to all the derivative functions are:
 """
 
 from math import sin, cos
-import sympy
-from sympy.matrices import Matrix, zeros
+# import sympy
+# from sympy.matrices import Matrix, zeros
 
 def get_dx(z_calc, u1, v1, f, cu, cv, x, y, z, roll, pitch, yaw):
     """
@@ -143,70 +143,70 @@ def get_dyaw(z_calc, u1, v1, f, cu, cv, x, y, z, roll, pitch, yaw):
 
     return du, dv
 
+"""
+I have commented out my function to calculate derivatives since SymPy is not one of the included modules. 
+However, I did not remove it because I believe it demonstrates an important part of my project, the
+jacobian calculation.
+"""
 
-def calculate_symbolic_derivatives():
-    """
-    Uses SymPy to calculate the symbolic form of the derivatives used above. 
-    Substitutes a test point to check the derivative functions are all correct. 
-    Does not accept any arguments or return anything, but prints all tests. 
-    """
+# def calculate_symbolic_derivatives():
+#     """
+#     Uses SymPy to calculate the symbolic form of the derivatives used above. 
+#     Substitutes a test point to check the derivative functions are all correct. 
+#     Does not accept any arguments or return anything, but prints all tests. 
+#     """
 
-    # Setting up necessary symbolic variables
-    z_calc, u1, v1, f, cu, cv, x, y, z, roll, pitch, yaw = sympy.symbols('z_calc, u1, v1, f, cu, cv, x, y, z, roll, pitch, yaw', real=True)
+#     # Setting up necessary symbolic variables
+#     z_calc, u1, v1, f, cu, cv, x, y, z, roll, pitch, yaw = sympy.symbols('z_calc, u1, v1, f, cu, cv, x, y, z, roll, pitch, yaw', real=True)
 
-    # Calculating u2 and v2, the coordinates of the pixel in the second image
-    K = Matrix([[f, 0, cu], [0, f, cv], [0, 0, 1]])
+#     # Calculating u2 and v2, the coordinates of the pixel in the second image
+#     K = Matrix([[f, 0, cu], [0, f, cv], [0, 0, 1]])
 
-    T = zeros(4, 4)
-    T[0:3, 3] = Matrix([[x], [y], [z]])
-    T[3, 3] = 1
+#     T = zeros(4, 4)
+#     T[0:3, 3] = Matrix([[x], [y], [z]])
+#     T[3, 3] = 1
 
-    cr = sympy.cos(roll)
-    sr = sympy.sin(roll)
-    cp = sympy.cos(pitch)
-    sp = sympy.sin(pitch)
-    cy = sympy.cos(yaw)
-    sy = sympy.sin(yaw)
+#     cr = sympy.cos(roll)
+#     sr = sympy.sin(roll)
+#     cp = sympy.cos(pitch)
+#     sp = sympy.sin(pitch)
+#     cy = sympy.cos(yaw)
+#     sy = sympy.sin(yaw)
 
-    R = Matrix([[cy*cp, cy*sp*sr - sy*cr, cy*sp*cr + sy*sr],
-                [sy*cp, sy*sp*sr + cy*cr, sy*sp*cr - cy*sr],
-                [  -sp,            cp*sr,            cp*cr]])
+#     R = Matrix([[cy*cp, cy*sp*sr - sy*cr, cy*sp*cr + sy*sr],
+#                 [sy*cp, sy*sp*sr + cy*cr, sy*sp*cr - cy*sr],
+#                 [  -sp,            cp*sr,            cp*cr]])
 
-    T[0:3, 0:3] = R
+#     T[0:3, 0:3] = R
 
-    u_initial = Matrix([[u1], [v1], [1]])
-    p = zeros(4, 1)
-    p[0:3, 0] = z_calc * K.inv() * u_initial
-    p[3] = 1
-    p_trans = T * p
-    u_trans = K * Matrix([[p_trans[0, 0]/p_trans[2, 0]], [p_trans[1, 0]/p_trans[2, 0]], [1]])
+#     u_initial = Matrix([[u1], [v1], [1]])
+#     p = zeros(4, 1)
+#     p[0:3, 0] = z_calc * K.inv() * u_initial
+#     p[3] = 1
+#     p_trans = T * p
+#     u_trans = K * Matrix([[p_trans[0, 0]/p_trans[2, 0]], [p_trans[1, 0]/p_trans[2, 0]], [1]])
 
-    u2 = u_trans[0, 0]
-    v2 = u_trans[1, 0]
+#     u2 = u_trans[0, 0]
+#     v2 = u_trans[1, 0]
 
-    # Set values for tests
-    test_values = [(z_calc, 3.66), (u1, 163), (v1, 115), (f, 579.47), (cu, 374.77), (cv, 265.41), (x, 0), (y, -0.12), (z, 0), (roll, 0), (pitch, 0), (yaw, 0)]
-    test_args = [val[1] for val in test_values]
+#     # Set values for tests
+#     test_values = [(z_calc, 3.66), (u1, 163), (v1, 115), (f, 579.47), (cu, 374.77), (cv, 265.41), (x, 0), (y, -0.12), (z, 0), (roll, 0), (pitch, 0), (yaw, 0)]
+#     test_args = [val[1] for val in test_values]
 
-    # Confirm u2 and v2 have been calculated correctly
-    print(u2.subs(test_values), 163)
-    print(v2.subs(test_values), 96)
+#     # Confirm u2 and v2 have been calculated correctly
+#     print(u2.subs(test_values), 163)
+#     print(v2.subs(test_values), 96)
 
-    # Confirm all derivative functions are returning the same value as symbolic functions
-    print(sympy.diff(u2, x).subs(test_values), get_dx(*test_args)[0])
-    print(sympy.diff(v2, x).subs(test_values), get_dx(*test_args)[1])
-    print(sympy.diff(u2, y).subs(test_values), get_dy(*test_args)[0])
-    print(sympy.diff(v2, y).subs(test_values), get_dy(*test_args)[1])
-    print(sympy.diff(u2, z).subs(test_values), get_dz(*test_args)[0])
-    print(sympy.diff(v2, z).subs(test_values), get_dz(*test_args)[1])
-    print(sympy.diff(u2, roll).subs(test_values), get_droll(*test_args)[0])
-    print(sympy.diff(v2, roll).subs(test_values), get_droll(*test_args)[1])
-    print(sympy.diff(u2, pitch).subs(test_values), get_dpitch(*test_args)[0])
-    print(sympy.diff(v2, pitch).subs(test_values), get_dpitch(*test_args)[1])
-    print(sympy.diff(u2, yaw).subs(test_values), get_dyaw(*test_args)[0])
-    print(sympy.diff(v2, yaw).subs(test_values), get_dyaw(*test_args)[1])
-
-
-if __name__ == "__main__":
-    # Test all derivative calculations
-    calculate_symbolic_derivatives()
+#     # Confirm all derivative functions are returning the same value as symbolic functions
+#     print(sympy.diff(u2, x).subs(test_values), get_dx(*test_args)[0])
+#     print(sympy.diff(v2, x).subs(test_values), get_dx(*test_args)[1])
+#     print(sympy.diff(u2, y).subs(test_values), get_dy(*test_args)[0])
+#     print(sympy.diff(v2, y).subs(test_values), get_dy(*test_args)[1])
+#     print(sympy.diff(u2, z).subs(test_values), get_dz(*test_args)[0])
+#     print(sympy.diff(v2, z).subs(test_values), get_dz(*test_args)[1])
+#     print(sympy.diff(u2, roll).subs(test_values), get_droll(*test_args)[0])
+#     print(sympy.diff(v2, roll).subs(test_values), get_droll(*test_args)[1])
+#     print(sympy.diff(u2, pitch).subs(test_values), get_dpitch(*test_args)[0])
+#     print(sympy.diff(v2, pitch).subs(test_values), get_dpitch(*test_args)[1])
+#     print(sympy.diff(u2, yaw).subs(test_values), get_dyaw(*test_args)[0])
+#     print(sympy.diff(v2, yaw).subs(test_values), get_dyaw(*test_args)[1])

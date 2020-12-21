@@ -2,10 +2,10 @@ import numpy as np
 from numpy.linalg import inv
 from imageio import imread
 
-from .calculate_jacobians import get_dx, get_dy, get_dz, get_droll, get_dpitch, get_dyaw
-from .transforms import rpy_from_dcm, dcm_from_rpy, epose_from_hpose, hpose_from_epose
-from .rectify_images import rectify_images
-from .get_disparity import get_disparity
+from calculate_jacobians import get_dx, get_dy, get_dz, get_droll, get_dpitch, get_dyaw
+from transforms import rpy_from_dcm, dcm_from_rpy, epose_from_hpose, hpose_from_epose
+from rectify_images import rectify_images
+from get_disparity import get_disparity
 
 
 def estimate_movement(It_1, It_2, disparity, K, baseline):
@@ -40,6 +40,9 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     grad_I2 = np.gradient(It_2)
     inv_K = inv(K)
 
+    # Scaling to increase translation. May be due to error in camera calibration.
+    scaling_factor = 1.5
+
     # Removing disparity values near edge to guarantee pixel is in both images
     border = 20
     width = It_1.shape[1]
@@ -52,7 +55,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     valid_points = np.transpose(disparity.nonzero())
 
     # Randomly sample (without replacement) num_point number of points from valid points to reduce runtime
-    num_points = 15000
+    num_points = 5000
     valid_points = valid_points[np.random.choice(valid_points.shape[0], min(valid_points.shape[0], num_points), replace=False)]
 
     # Set up initial values
@@ -61,7 +64,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     error = 0
     no_change_counter = 0
 
-    iters = 25
+    iters = 20
 
     for iteration in range(iters):
         previous_error = error
@@ -88,7 +91,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
         T = hpose_from_epose(E)
 
         # Terminate if error sufficiently low or very little change in error for too many iterations
-        if error <= 200:
+        if error <= 300:
             break
 
         if abs(previous_error - error) < 20:
@@ -102,6 +105,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     # Invert transform to get transform fro It_1 to It_2 (rather than the other way around)
     T = hpose_from_epose(E)
     E = epose_from_hpose(inv(T))
+    E[0:3] *= scaling_factor
     return E, error
 
 
@@ -188,30 +192,3 @@ def get_jacobian(z_calc, u1, v1, u2, v2, f, cu, cv, E, grad_I2):
     j = np.array([dI_dx, dI_dy, dI_dz, dI_droll, dI_dpitch, dI_dyaw])
     
     return j
-
-
-if __name__ == "__main__":
-    # Read in two images
-    It = imread('./input/run1_base_hr/omni_image4/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
-    Ib = imread('./input/run1_base_hr/omni_image5/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
-
-    # Set up values needed for rectification
-    Kt = np.array([[473.571, 0,  378.17],
-            [0,  477.53, 212.577],
-            [0,  0,  1]])
-    Kb = np.array([[473.368, 0,  371.65],
-            [0,  477.558, 204.79],
-            [0,  0,  1]])
-    dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
-    db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
-    imageSize = (752, 480)
-    T = np.array([0, 0.12, 0])
-    baseline = 0.12
-
-    # Rectify the images and calculate disparity
-    It_rect, Ib_rect, K = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)
-    disparity = get_disparity(It_rect, Ib_rect)    
-
-    # Estimate transform between top and bottom image
-    E, error = estimate_movement(It_rect, Ib_rect, disparity, K, baseline)
-    print(E, error)
