@@ -12,7 +12,6 @@ from .support.plot_path import plot_path
 from .support.get_utm_poses import get_utm_poses
 from .support.get_RMS_error import get_RMS_error, find_closest_pose
 from .support.file_management import get_filename, get_unix_timestamp
-from .support.transforms import epose_from_hpose, hpose_from_epose
 from .support.check_outlier import check_outlier
 
 
@@ -42,10 +41,11 @@ def run_project(start_frame, end_frame):
 
     initial_pose = find_closest_pose(ground_truth, get_unix_timestamp(get_filename(files, str(start_frame).zfill(6))))
 
-    TSR = np.eye(4)
-    TSR[0:3, 3] = initial_pose[0:3].T
-    TSR[0:3, 0:3] = R.from_quat(initial_pose[3:]).as_matrix()
-    initial_movement = epose_from_hpose(TSR)
+    print(initial_pose)
+    initial_movement = np.zeros((6, 1))
+    initial_movement[0:3, :] = np.reshape(initial_pose[0:3].T, (3, 1))
+    initial_movement[3:, :] = np.reshape(R.from_quat(initial_pose[3:]).as_euler('xyz'), (3, 1))
+    print(initial_movement)
 
     # Initialize arrays
     It_end = []
@@ -109,4 +109,4 @@ def run_project(start_frame, end_frame):
 
 
 if __name__ == "__main__":
-    run_project(1750, 1770)
+    run_project(1750, 1751)
