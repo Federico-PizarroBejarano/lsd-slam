@@ -1,22 +1,15 @@
 import numpy as np
 import cv2
 
-def rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T):
+def rectify_images(It, Ib):
     """
-    Rectify two stereo images given their camera matrices, distortion matrices, desired output
-    image size, and translation between the two stereo cameras. Also applied a bilateral filter
-    on both rectified images to reduce noise while keeping edges sharp. 
+    Rectify two stereo images. Also applied a bilateral filter on both rectified images 
+    to reduce noise while keeping edges sharp. 
 
     Parameters
     ----------
     It (np.ndarray): a numpy array representing the top image
     Ib (np.ndarray): a numpy array representing the bottom image
-    Kt (np.ndarray): the top camera instrinic camera matrix
-    Kb (np.ndarray): the bottom camera instrinic camera matrix
-    dt (np.ndarray): the distortion parameters array for the top camera
-    db (np.ndarray): the distortion parameters array for the bottom camera
-    imageSize (tuple): a tuple representing the inverted desired output size of the rectified images
-    T (np.ndarray): a translation vector between cameras
     
     Returns
     -------
@@ -24,6 +17,19 @@ def rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T):
     Ib_rect (np.ndarray): a numpy array representing the rectified bottom image
     K_rect (np.ndarray): the new instrinic camera matrix
     """
+
+    # Information needed for rectification
+    Kt = np.array([[473.571, 0,  378.17],
+          [0,  477.53, 212.577],
+          [0,  0,  1]])
+    Kb = np.array([[473.368, 0,  371.65],
+          [0,  477.558, 204.79],
+          [0,  0,  1]])
+    dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
+    db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
+    imageSize = (752, 480)
+    baseline = 0.12
+    T = np.array([0, baseline, 0])
 
     Rt, Rb, Pt, Pb = cv2.stereoRectify(Kt, dt, Kb, db, imageSize, np.eye(3), T, alpha=0)[0:4]
 

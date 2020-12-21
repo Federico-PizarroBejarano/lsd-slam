@@ -25,21 +25,9 @@ def run_project(input_dir, output_dir):
     # Get start time to check runtime
     start_time = time.time()
 
+    # Setting the start and end frames
     start_frame = 1750
-    end_frame = 1770
-
-    # Information needed for rectification
-    Kt = np.array([[473.571, 0,  378.17],
-          [0,  477.53, 212.577],
-          [0,  0,  1]])
-    Kb = np.array([[473.368, 0,  371.65],
-          [0,  477.558, 204.79],
-          [0,  0,  1]])
-    dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
-    db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
-    imageSize = (752, 480)
-    baseline = 0.12
-    T = np.array([0, baseline, 0])
+    end_frame = 1751
 
     # Get all filenames in omni_images4 folder
     files = os.listdir(f'{input_dir}/run1_base_hr/omni_image4')
@@ -50,16 +38,18 @@ def run_project(input_dir, output_dir):
 
     initial_pose = find_closest_pose(ground_truth, get_unix_timestamp(get_filename(files, str(start_frame).zfill(6))))
 
-    TSR = np.eye(4)
-    TSR[0:3, 3] = initial_pose[0:3].T
-    TSR[0:3, 0:3] = R.from_quat(initial_pose[3:]).as_matrix()
-    initial_movement = epose_from_hpose(TSR)
+    initial_movement = np.zeros((6, 1))
+    initial_movement[0:3, :] = np.reshape(initial_pose[0:3].T, (3, 1))
+    initial_movement[0:3, :] = np.reshape(R.from_quat(initial_pose[3:]).as_euler('xyz'), (3, 1))
 
     # Initialize arrays
     It_end = []
     disparity_end = []
     all_movements = []
     timestamps = []
+
+    # Set distance between stereo cameras
+    baseline = 0.12
 
     # Loop through every frame from start_frame to end_frame
     for frame in range(start_frame, end_frame+1):
@@ -73,7 +63,7 @@ def run_project(input_dir, output_dir):
         Ib_end = imread(f'{input_dir}/run1_base_hr/omni_image5/{filename}', as_gray = True)
 
         # Rectify new images and calculate disparity
-        It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end, Kt, Kb, dt, db, imageSize, T)
+        It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end)
         disparity_end =  get_disparity(It_end, Ib_end) 
         
         # Saving disparity as an image
@@ -96,15 +86,15 @@ def run_project(input_dir, output_dir):
         print(f'Frame: {frame}')        
 
     # Calculate the utm coordinates given the movements
-    all_utm_poses = get_utm_poses(np.array(all_movements))
+    calculated_utm_poses = get_utm_poses(np.array(all_movements))
 
     # Calculate the RMS error
-    rms_error, closest_path = get_RMS_error(ground_truth_utm, all_utm_poses, timestamps)
+    rms_error, closest_path = get_RMS_error(ground_truth_utm, calculated_utm_poses, timestamps)
     print('RMS Error: ', rms_error)
     print('Runtime: ', time.time()-start_time)
 
     # Plot final calculated path
-    plot_path(input_dir, output_dir, ground_truth_utm[:, 1:], closest_path, all_utm_poses)
+    plot_path(input_dir, output_dir, ground_truth_utm[:, 1:], closest_path, calculated_utm_poses)
 
 
 parser = argparse.ArgumentParser(description='ROB501 Final Project.')
@@ -117,9 +107,6 @@ parser.add_argument('--output_dir', dest='output_dir', type=str, default="./outp
 if __name__ == "__main__":
     # Parse command line arguments
     args = parser.parse_args()
-
-    # Uncomment this line if you wish to test your docker setup
-    test_docker(Path(args.input_dir), Path(args.output_dir))
 
     # Run the project code
     run_project(args.input_dir, args.output_dir)
