@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from imageio import imread
 
-def plot_path(input_dir, output_dir, full_path = np.array([]), interpolated_path = np.array([]), calculated_path = np.array([])):
+def plot_path(full_path = np.array([]), interpolated_path = np.array([]), calculated_path = np.array([])):
     """
     Plots paths of the rover onto the overhead image. The paths must be supplied as numpy arrays of 
     utm coordinates. 
@@ -18,11 +18,12 @@ def plot_path(input_dir, output_dir, full_path = np.array([]), interpolated_path
         Represents the calculated path of the rover. Plotted in Red.
     """
 
-    overhead_file = f'{input_dir}/raster_data/mosaic_utm_20cm.tif'
+    overhead_file = './input/raster_data/mosaic_utm_20cm.tif'
     overhead = imread(overhead_file)
 
     extent = (625436.02725488, 625563.22725488, 5041709.408990768, 5041778.008990767)
 
+    # plt.ion()
     plt.imshow(overhead, extent=extent)
 
     if full_path.shape[0] > 0:
@@ -35,8 +36,9 @@ def plot_path(input_dir, output_dir, full_path = np.array([]), interpolated_path
         plt.scatter(calculated_path[:,0], calculated_path[:,1], s=1, color='r', label='Calculated Path')
 
     plt.legend()
-    plt.savefig(f'{output_dir}/final_path.png')
-    
-    plt.set_xlim(calculated_path[0,0]-10, calculated_path[0,0]+10)
-    plt.set_ylim(calculated_path[0,1]-10, calculated_path[0,1]+10)
-    plt.savefig(f'{output_dir}/final_path_zoomed.png')
+    plt.savefig(f'{output_dir}/final_path')
+
+    plt.xlim(calculated_path[0,0]-6, calculated_path[0,0]+6)
+    plt.ylim(calculated_path[0,1]-6, calculated_path[0,1]+6)
+
+    plt.savefig(f'{output_dir}/final_path_zoomed')
