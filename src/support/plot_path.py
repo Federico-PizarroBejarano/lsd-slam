@@ -36,6 +36,8 @@ def plot_path(input_dir, output_dir, full_path = np.array([]), interpolated_path
         plt.scatter(calculated_path[:,0], calculated_path[:,1], s=1, color='r', label='Calculated Path')
 
     plt.legend()
+    plt.xlim(extent[0], extent[1])
+    plt.ylim(extent[2], extent[3])
     plt.savefig(f'{output_dir}/final_path')
 
     plt.xlim(calculated_path[0,0]-6, calculated_path[0,0]+6)

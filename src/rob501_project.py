@@ -17,7 +17,6 @@ from support.plot_path import plot_path
 from support.get_utm_poses import get_utm_poses
 from support.get_RMS_error import get_RMS_error, find_closest_pose
 from support.file_management import get_filename, get_unix_timestamp
-from support.transforms import epose_from_hpose
 from support.check_outlier import check_outlier
 
 
@@ -27,7 +26,7 @@ def run_project(input_dir, output_dir):
 
     # Setting the start and end frames
     start_frame = 1750
-    end_frame = 1751
+    end_frame = 1750
 
     # Get all filenames in omni_images4 folder
     files = os.listdir(f'{input_dir}/run1_base_hr/omni_image4')
@@ -40,7 +39,7 @@ def run_project(input_dir, output_dir):
 
     initial_movement = np.zeros((6, 1))
     initial_movement[0:3, :] = np.reshape(initial_pose[0:3].T, (3, 1))
-    initial_movement[0:3, :] = np.reshape(R.from_quat(initial_pose[3:]).as_euler('xyz'), (3, 1))
+    initial_movement[3:, :] = np.reshape(R.from_quat(initial_pose[3:]).as_euler('xyz'), (3, 1))
 
     # Initialize arrays
     It_end = []
@@ -64,7 +63,7 @@ def run_project(input_dir, output_dir):
 
         # Rectify new images and calculate disparity
         It_end, Ib_end, K_rect = rectify_images(It_end, Ib_end)
-        disparity_end =  get_disparity(It_end, Ib_end) 
+        disparity_end = get_disparity(It_end, Ib_end) 
         
         # Saving disparity as an image
         plt.imshow(-disparity_end, cmap='gray')
