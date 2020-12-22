@@ -94,34 +94,33 @@ def get_disparity(It, Ib):
     for i in range(len(all_pixel_errors)):
         all_patch_errors.append(correlate(all_pixel_errors[i], mask))
     
-    # Loop through every pixel in image
-    for y in range(height):
-        for x in range(width):
-            # Check if gradient is sufficiently large
-            if useful_pixels[y][x] == 0:
+    valid_points = np.transpose(useful_pixels.nonzero())
+
+    # Loop through every useful pixel in image
+    for point in range(valid_points.shape[0]):
+        y, x = valid_points[point]
+
+        # Initialize minimum error and best disparity
+        min_err = float('inf')
+        best_disparity = x
+        
+        # For every possible disparity value
+        for disparity in range(-maxd, 1):
+            # Check if shifted pixel is within image
+            if x+disparity < 0 or x+disparity >= width:
                 continue
 
-            # Initialize minimum error and best disparity
-            min_err = float('inf')
-            best_disparity = x
+            # Find the error for that disparity value and pixel
+            err = all_patch_errors[disparity + maxd][y, x+disparity]
             
-            # For every possible disparity value
-            for disparity in range(-maxd, 1):
-                # Check if shifted pixel is within image
-                if x+disparity < 0 or x+disparity >= width:
-                    continue
-
-                # Find the error for that disparity value and pixel
-                err = all_patch_errors[disparity + maxd][y, x+disparity]
-                
-                # If the error value is less than the smallest one found so 
-                #   far, set the newest lowest error and best disparity
-                if err < min_err:
-                    min_err = err
-                    best_disparity = disparity
-            
-            # Set this pixel's disparity to the best disparity found
-            Id[y][x] = -best_disparity
+            # If the error value is less than the smallest one found so 
+            #   far, set the newest lowest error and best disparity
+            if err < min_err:
+                min_err = err
+                best_disparity = disparity
+        
+        # Set this pixel's disparity to the best disparity found
+        Id[y][x] = -best_disparity
     
     # Use the median filter to smooth out disparity values
     Id = median_filter(Id, size = median_window_size)

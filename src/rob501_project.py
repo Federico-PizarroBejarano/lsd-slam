@@ -26,7 +26,7 @@ def run_project(input_dir, output_dir):
 
     # Setting the start and end frames
     start_frame = 1750
-    end_frame = 1750
+    end_frame = 1775
 
     # Get all filenames in omni_images4 folder
     files = os.listdir(f'{input_dir}/run1_base_hr/omni_image4')
@@ -66,7 +66,7 @@ def run_project(input_dir, output_dir):
         disparity_end = get_disparity(It_end, Ib_end) 
         
         # Saving disparity as an image
-        plt.imshow(-disparity_end, cmap='gray')
+        plt.imshow(-disparity_end, cmap='gray', vmin=-60, vmax=0)
         plt.savefig(f'{output_dir}/disparity_frame{frame}.png')
 
         # If it is the first frame, set first movement to inital_movement
