@@ -1,10 +1,6 @@
 import numpy as np
 from scipy.ndimage.filters import correlate, median_filter
-from imageio import imread
-import matplotlib.pyplot as plt
 import cv2
-
-from .rectify_images import rectify_images
 
 def get_disparity(It, Ib):
     """
@@ -98,34 +94,33 @@ def get_disparity(It, Ib):
     for i in range(len(all_pixel_errors)):
         all_patch_errors.append(correlate(all_pixel_errors[i], mask))
     
-    # Loop through every pixel in image
-    for y in range(height):
-        for x in range(width):
-            # Check if gradient is sufficiently large
-            if useful_pixels[y][x] == 0:
+    valid_points = np.transpose(useful_pixels.nonzero())
+
+    # Loop through every useful pixel in image
+    for point in range(valid_points.shape[0]):
+        y, x = valid_points[point]
+
+        # Initialize minimum error and best disparity
+        min_err = float('inf')
+        best_disparity = x
+        
+        # For every possible disparity value
+        for disparity in range(-maxd, 1):
+            # Check if shifted pixel is within image
+            if x+disparity < 0 or x+disparity >= width:
                 continue
 
-            # Initialize minimum error and best disparity
-            min_err = float('inf')
-            best_disparity = x
+            # Find the error for that disparity value and pixel
+            err = all_patch_errors[disparity + maxd][y, x+disparity]
             
-            # For every possible disparity value
-            for disparity in range(-maxd, 1):
-                # Check if shifted pixel is within image
-                if x+disparity < 0 or x+disparity >= width:
-                    continue
-
-                # Find the error for that disparity value and pixel
-                err = all_patch_errors[disparity + maxd][y, x+disparity]
-                
-                # If the error value is less than the smallest one found so 
-                #   far, set the newest lowest error and best disparity
-                if err < min_err:
-                    min_err = err
-                    best_disparity = disparity
-            
-            # Set this pixel's disparity to the best disparity found
-            Id[y][x] = -best_disparity
+            # If the error value is less than the smallest one found so 
+            #   far, set the newest lowest error and best disparity
+            if err < min_err:
+                min_err = err
+                best_disparity = disparity
+        
+        # Set this pixel's disparity to the best disparity found
+        Id[y][x] = -best_disparity
     
     # Use the median filter to smooth out disparity values
     Id = median_filter(Id, size = median_window_size)
@@ -194,38 +189,3 @@ def hamming_distance(xor_num):
     bitstring = bin(xor_num)
     hamming_dist = bitstring.count('1')
     return hamming_dist
-
-
-if __name__ == "__main__":
-    # Load the stereo images
-    It = imread('./input/run1_base_hr/omni_image4/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
-    Ib = imread('./input/run1_base_hr/omni_image5/frame000000_2018_09_04_17_19_42_773316.png', as_gray = True)
-
-    # Camera intrinsic matrixes and distortion arrays
-    Kt = np.array([[473.571, 0,  378.17],
-          [0,  477.53, 212.577],
-          [0,  0,  1]])
-    Kb = np.array([[473.368, 0,  371.65],
-          [0,  477.558, 204.79],
-          [0,  0,  1]])
-    dt = np.array([-0.333605,0.159377,6.11251e-05,4.90177e-05,-0.0460505])
-    db = np.array([-0.3355,0.162877,4.34759e-05,2.72184e-05,-0.0472616])
-    
-    imageSize = (752, 480)
-    T = np.array([0, 0.12, 0])
-
-    # Rectifying images
-    It_rect, Ib_rect = rectify_images(It, Ib, Kt, Kb, dt, db, imageSize, T)[0:2]
-
-    # Calculate disparity
-    Id = get_disparity(It_rect, Ib_rect)
-
-    # Plotting rectified images and disparity
-    fig = plt.figure()
-    ax1 = fig.add_subplot(221)
-    ax2 = fig.add_subplot(222)
-    ax3 = fig.add_subplot(223)
-    ax1.imshow(It_rect, cmap='gray')
-    ax2.imshow(Ib_rect, cmap='gray')
-    ax3.imshow(-Id, cmap='gray')
-    plt.show()

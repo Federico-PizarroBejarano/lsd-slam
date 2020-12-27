@@ -78,6 +78,7 @@ def hpose_from_epose(E):
   
     return T
 
+
 def dcm_from_rpy(rpy):
     """
     Rotation matrix from roll, pitch, yaw Euler angles.
