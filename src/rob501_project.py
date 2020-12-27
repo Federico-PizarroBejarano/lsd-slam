@@ -25,8 +25,8 @@ def run_project(input_dir, output_dir):
     start_time = time.time()
 
     # Setting the start and end frames
-    start_frame = 1750
-    end_frame = 1775
+    start_frame = 1600
+    end_frame = 1825
 
     # Get all filenames in omni_images4 folder
     files = os.listdir(f'{input_dir}/run1_base_hr/omni_image4')

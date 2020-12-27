@@ -52,7 +52,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     valid_points = np.transpose(disparity.nonzero())
 
     # Randomly sample (without replacement) num_point number of points from valid points to reduce runtime
-    num_points = 5000
+    num_points = 15000
     valid_points = valid_points[np.random.choice(valid_points.shape[0], min(valid_points.shape[0], num_points), replace=False)]
 
     # Set up initial values
@@ -61,7 +61,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
     error = 0
     no_change_counter = 0
 
-    iters = 20
+    iters = 30
 
     for iteration in range(iters):
         previous_error = error
@@ -88,7 +88,7 @@ def estimate_movement(It_1, It_2, disparity, K, baseline):
         T = hpose_from_epose(E)
 
         # Terminate if error sufficiently low or very little change in error for too many iterations
-        if error <= 300:
+        if error <= 200:
             break
 
         if abs(previous_error - error) < 20:
